@@ -165,6 +165,8 @@ namespace ism7mqtt
                             {
                                 await mqttClient.SubscribeAsync($"Wolf/{ip}/+/set", cancellationToken: token);
                                 await mqttClient.SubscribeAsync($"Wolf/{ip}/+/set/#", cancellationToken: token);
+                                if (timeprogInterval > 0)
+                                    await mqttClient.SubscribeAsync(client.TimeprogRefreshTopic, cancellationToken: token);
                                 if (!String.IsNullOrEmpty(discoveryId))
                                 {
                                     await mqttClient.SubscribeAsync("homeassistant/status", cancellationToken: token);
@@ -247,6 +249,13 @@ namespace ism7mqtt
                 //ha startup, re-publish discovery info
                 if (_haDiscovery is null) return Task.CompletedTask;
                 return _haDiscovery.PublishDiscoveryInfo(cancellationToken);
+            }
+
+            if (message.Topic == client.TimeprogRefreshTopic)
+            {
+                //payload is ignored
+                client.RequestTimeprogRefresh();
+                return Task.CompletedTask;
             }
 
             if (message.Topic.EndsWith("/set"))
